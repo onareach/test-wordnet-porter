@@ -1,19 +1,20 @@
-# WordNet Porter Configuration
+databases:
+  sqlite:
+    path: "/tmp/wordnet/wn.db"
+  postgres:
+    host: "localhost"
+    port: 5432
+    database: "wordnet_test"
+    user: null
+    password: null
 
-# SQLite database settings
-sqlite:
-  # This will be overridden by the WORDNET_SQLITE_PATH environment variable if set
-  path: ~/.wn_data/wn.db
-
-# PostgreSQL settings
-postgres:
-  host: localhost
-  port: 5432
-  database: wordnet
-  user: postgres
-  password: postgres
-
-# Output settings
 output:
-  directory: output
-  log_level: info
+  directory: "./output"
+  log_level: "info"
+  show_console_logs: true
+  show_db_name: false
+
+application:
+  batch_size: 1000
+  max_login_attempts: 3
+  force_mode: false
