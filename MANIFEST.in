@@ -1,0 +1,11 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include setup.cfg
+include MANIFEST.in
+include CONTRIBUTING.md
+include wordnet_porter/config.yaml
+recursive-include wordnet_porter/docs *.md
+recursive-include wordnet_porter/examples *.py
+recursive-include wordnet_porter/tests *.py
+recursive-include wordnet_porter/output *.gitkeep
