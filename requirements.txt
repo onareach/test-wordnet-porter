@@ -1,0 +1,8 @@
+# Core dependencies
+pyyaml>=6.0
+# IMPORTANT: Use psycopg2-binary, not psycopg2
+psycopg2-binary>=2.9.5
+tqdm>=4.64.0
+
+# Development dependencies
+pytest>=7.0.0

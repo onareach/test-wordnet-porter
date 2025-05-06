@@ -1,0 +1,19 @@
+# WordNet Porter Configuration
+
+# SQLite database settings
+sqlite:
+  # This will be overridden by the WORDNET_SQLITE_PATH environment variable if set
+  path: ~/.wn_data/wn.db
+
+# PostgreSQL settings
+postgres:
+  host: localhost
+  port: 5432
+  database: wordnet
+  user: postgres
+  password: postgres
+
+# Output settings
+output:
+  directory: output
+  log_level: info
