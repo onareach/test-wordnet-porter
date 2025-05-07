@@ -49,12 +49,12 @@ DEFAULT_CONFIG = {
 class Config:
     """
     Configuration class for WordNet Porter application.
-    
+
     This class manages all configuration settings, including database connections,
     file paths, and application state. It supports loading configuration from
     YAML files and command-line arguments.
     """
-    
+
     def __init__(self):
         """Initialize configuration with default values and load from files."""
         # Set up configuration directories
@@ -62,24 +62,24 @@ class Config:
         self.user_config_file: Path = self.user_config_dir / "config.yaml"
         self.project_dir: Path = Path(__file__).parent
         self.project_config_file: Path = self.project_dir / "config.yaml"
-        
+
         # Load configuration
         self.settings: Dict[str, Any] = DEFAULT_CONFIG.copy()
         self._load_config()
-        
+
         # State tracking
         self.success: bool = True
-        
+
         # Set up paths
         self._setup_paths()
-        
+
         # Configure file logging
         self._setup_file_logging()
-    
+
     def _load_config(self) -> None:
         """
         Load configuration from files.
-        
+
         Loads configuration from the following sources in order:
         1. Project config file (wordnet_porter/config.yaml)
         2. User config file (~/.wordnet_porter/config.yaml)
@@ -92,7 +92,7 @@ class Config:
                     project_config = yaml.safe_load(f)
                     if project_config:
                         self._update_nested_dict(self.settings, project_config)
-            
+
             # Load user config if it exists
             if self.user_config_file.exists():
                 logger.debug(f"Loading user config from {self.user_config_file}")
@@ -100,19 +100,19 @@ class Config:
                     user_config = yaml.safe_load(f)
                     if user_config:
                         self._update_nested_dict(self.settings, user_config)
-        
+
         except Exception as e:
             logger.error(f"Error loading configuration: {e}")
             print(f"⚠️ Error loading configuration: {e}")
-    
+
     def _update_nested_dict(self, d: Dict[str, Any], u: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update a nested dictionary with values from another dictionary.
-        
+
         Args:
             d: The dictionary to update
             u: The dictionary with new values
-            
+
         Returns:
             The updated dictionary
         """
@@ -122,20 +122,20 @@ class Config:
             else:
                 d[k] = v
         return d
-    
+
     def _setup_paths(self) -> None:
         """Set up paths based on configuration."""
         # Create user config directory if it doesn't exist
         os.makedirs(self.user_config_dir, exist_ok=True)
-        
+
         # Get output directory from settings
         output_dir_str = self.settings["output"]["directory"]
         output_dir = Path(output_dir_str)
-        
+
         # Make relative paths relative to the project directory
         if not output_dir.is_absolute():
             output_dir = self.project_dir / output_dir
-        
+
         # Set up paths
         self.output_dir: Path = output_dir
         self.sql_dir: Path = self.output_dir / "sql"
@@ -145,42 +145,42 @@ class Config:
         self.sql_indexes_dir: Path = self.sql_dir / "indexes"
         self.sql_foreign_keys_dir: Path = self.sql_dir / "foreign_keys"
         self.sql_fk_validate_dir: Path = self.sql_dir / "fk_validate"
-        
+
         # Create directories
-        for directory in [self.output_dir, self.sql_dir, self.logs_dir, 
-                         self.schemas_dir, self.sql_tables_dir, 
-                         self.sql_indexes_dir, self.sql_foreign_keys_dir, 
+        for directory in [self.output_dir, self.sql_dir, self.logs_dir,
+                         self.schemas_dir, self.sql_tables_dir,
+                         self.sql_indexes_dir, self.sql_foreign_keys_dir,
                          self.sql_fk_validate_dir]:
             os.makedirs(directory, exist_ok=True)
-    
+
     def _setup_file_logging(self) -> None:
         """Set up file logging for the application."""
         try:
             # Get log level from settings
             log_level_str = self.settings["output"]["log_level"].upper()
             log_level = getattr(logging, log_level_str, logging.INFO)
-            
+
             # Set root logger level
             logging.getLogger().setLevel(log_level)
-            
+
             # Add file handler to root logger
             file_handler = logging.FileHandler(
-                self.logs_dir / "wordnet_porter.log", 
+                self.logs_dir / "wordnet_porter.log",
                 mode='a'
             )
             file_handler.setFormatter(logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             ))
             logging.getLogger().addHandler(file_handler)
-            
+
             logger.info("File logging configured")
         except Exception as error:
             print(f"⚠️ Failed to set up file logging: {error}")
-            
+
     def setup_console_logging(self) -> None:
         """
         Set up console logging if show_console_logs is True.
-        
+
         This method adds a console handler to the root logger if show_console_logs is True.
         """
         if self.settings["output"]["show_console_logs"]:
@@ -195,17 +195,17 @@ class Config:
     def _format_yaml(self, data, indent=0):
         """
         Format data as YAML with proper indentation.
-        
+
         Args:
             data: The data to format
             indent: The indentation level
-            
+
         Returns:
             The formatted YAML string
         """
         result = ""
         spaces = " " * indent
-        
+
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, dict):
@@ -219,40 +219,40 @@ class Config:
                     result += f"{spaces}{key}: {value}\n"
                 else:
                     result += f"{spaces}{key}: \"{value}\"\n"
-        
+
         return result
-    
+
     def _write_yaml_file(self, file):
         """
         Write the entire YAML file with proper formatting.
-        
+
         Args:
             file: The file to write to
         """
         # Create a manually formatted YAML string
         yaml_content = "databases:\n"
-        
+
         # Manually format the sqlite section with proper indentation
         yaml_content += "  sqlite:\n"
         yaml_content += f"    path: \"{self.settings['databases']['sqlite']['path']}\"\n"
-        
+
         # Manually format the postgres section with proper indentation
         yaml_content += "  postgres:\n"
         yaml_content += f"    host: \"{self.settings['databases']['postgres']['host']}\"\n"
         yaml_content += f"    port: {self.settings['databases']['postgres']['port']}\n"
         yaml_content += f"    database: \"{self.settings['databases']['postgres']['database']}\"\n"
-        
+
         # Handle null values properly
         if self.settings['databases']['postgres']['user'] is None:
             yaml_content += "    user: null\n"
         else:
             yaml_content += f"    user: \"{self.settings['databases']['postgres']['user']}\"\n"
-            
+
         if self.settings['databases']['postgres']['password'] is None:
             yaml_content += "    password: null\n"
         else:
             yaml_content += f"    password: \"{self.settings['databases']['postgres']['password']}\"\n"
-        
+
         # Output section
         yaml_content += "\noutput:\n"
         for key, value in self.settings["output"].items():
@@ -264,7 +264,7 @@ class Config:
                 yaml_content += f"  {key}: {value}\n"
             else:
                 yaml_content += f"  {key}: \"{value}\"\n"
-        
+
         # Application section
         yaml_content += "\napplication:\n"
         for key, value in self.settings["application"].items():
@@ -276,29 +276,29 @@ class Config:
                 yaml_content += f"  {key}: {value}\n"
             else:
                 yaml_content += f"  {key}: \"{value}\"\n"
-        
+
         # Write the content to the file
         file.write(yaml_content)
-    
+
     def save_config(self) -> bool:
         """
         Save current configuration to user config file.
-        
+
         Returns:
             bool: True if configuration was saved successfully, False otherwise.
         """
         try:
             # Create user config directory if it doesn't exist
             os.makedirs(self.user_config_dir, exist_ok=True)
-            
+
             # Save configuration to user config file with custom formatting
             with open(self.user_config_file, 'w') as f:
                 self._write_yaml_file(f)
-            
+
             logger.info(f"Configuration saved to {self.user_config_file}")
             print(f"✅ Configuration saved to {self.user_config_file}")
             return True
-        
+
         except Exception as e:
             logger.error(f"Error saving configuration: {e}")
             print(f"❌ Error saving configuration: {e}")
@@ -307,7 +307,7 @@ class Config:
     def prompt_credentials(self) -> bool:
         """
         Prompt for PostgreSQL credentials.
-        
+
         Returns:
             bool: True if credentials were successfully obtained, False otherwise.
         """
@@ -316,7 +316,7 @@ class Config:
     def ensure_pg_credentials(self) -> bool:
         """
         Ensure PostgreSQL credentials are available, prompting if necessary.
-        
+
         Returns:
             bool: True if credentials are available, False otherwise.
         """
@@ -324,7 +324,7 @@ class Config:
         if self.settings["databases"]["postgres"]["user"] and self.settings["databases"]["postgres"]["password"]:
             logger.debug("Using PostgreSQL credentials from configuration")
             return True
-            
+
         try:
             # Try to use the dedicated credentials module
             from .steps import step020_postgres_credentials
@@ -343,121 +343,121 @@ class Config:
                 logger.error("PostgreSQL username cannot be empty")
                 self.success = False
                 return False
-            
+
             # Store credentials in settings
             self.settings["databases"]["postgres"]["user"] = user
             self.settings["databases"]["postgres"]["password"] = password
 
             logger.info("PostgreSQL credentials obtained via fallback prompt")
             return True
-    
+
     # Property getters and setters for backward compatibility
-    
+
     @property
     def SQLITE_PATH(self) -> str:
         """Get SQLite database path."""
         return self.settings["databases"]["sqlite"]["path"]
-    
+
     @SQLITE_PATH.setter
     def SQLITE_PATH(self, path: str) -> None:
         """Set SQLite database path."""
         self.settings["databases"]["sqlite"]["path"] = path
-    
+
     @property
     def PG_HOST(self) -> str:
         """Get PostgreSQL host."""
         return self.settings["databases"]["postgres"]["host"]
-    
+
     @PG_HOST.setter
     def PG_HOST(self, host: str) -> None:
         """Set PostgreSQL host."""
         self.settings["databases"]["postgres"]["host"] = host
-    
+
     @property
     def PG_PORT(self) -> int:
         """Get PostgreSQL port."""
         return self.settings["databases"]["postgres"]["port"]
-    
+
     @PG_PORT.setter
     def PG_PORT(self, port: int) -> None:
         """Set PostgreSQL port."""
         self.settings["databases"]["postgres"]["port"] = port
-    
+
     @property
     def PG_DATABASE(self) -> str:
         """Get PostgreSQL database name."""
         return self.settings["databases"]["postgres"]["database"]
-    
+
     @PG_DATABASE.setter
     def PG_DATABASE(self, database: str) -> None:
         """Set PostgreSQL database name."""
         self.settings["databases"]["postgres"]["database"] = database
-    
+
     @property
     def pg_user(self) -> Optional[str]:
         """Get PostgreSQL username."""
         return self.settings["databases"]["postgres"]["user"]
-    
+
     @pg_user.setter
     def pg_user(self, user: Optional[str]) -> None:
         """Set PostgreSQL username."""
         self.settings["databases"]["postgres"]["user"] = user
-    
+
     @property
     def pg_password(self) -> Optional[str]:
         """Get PostgreSQL password."""
         return self.settings["databases"]["postgres"]["password"]
-    
+
     @pg_password.setter
     def pg_password(self, password: Optional[str]) -> None:
         """Set PostgreSQL password."""
         self.settings["databases"]["postgres"]["password"] = password
-    
+
     @property
     def SHOW_DB_NAME(self) -> bool:
         """Get show database name setting."""
         return self.settings["output"]["show_db_name"]
-    
+
     @SHOW_DB_NAME.setter
     def SHOW_DB_NAME(self, value: bool) -> None:
         """Set show database name setting."""
         self.settings["output"]["show_db_name"] = value
-    
+
     @property
     def SHOW_LOGGING(self) -> bool:
         """Get show logging setting."""
         return self.settings["output"]["show_console_logs"]
-    
+
     @SHOW_LOGGING.setter
     def SHOW_LOGGING(self, value: bool) -> None:
         """Set show logging setting."""
         self.settings["output"]["show_console_logs"] = value
-    
+
     @property
     def MAX_LOGIN_ATTEMPTS(self) -> int:
         """Get maximum login attempts."""
         return self.settings["application"]["max_login_attempts"]
-    
+
     @MAX_LOGIN_ATTEMPTS.setter
     def MAX_LOGIN_ATTEMPTS(self, value: int) -> None:
         """Set maximum login attempts."""
         self.settings["application"]["max_login_attempts"] = value
-    
+
     @property
     def BATCH_SIZE(self) -> int:
         """Get batch size."""
         return self.settings["application"]["batch_size"]
-    
+
     @BATCH_SIZE.setter
     def BATCH_SIZE(self, value: int) -> None:
         """Set batch size."""
         self.settings["application"]["batch_size"] = value
-    
+
     @property
     def force_mode(self) -> bool:
         """Get force mode setting."""
         return self.settings["application"]["force_mode"]
-    
+
     @force_mode.setter
     def force_mode(self, value: bool) -> None:
         """Set force mode setting."""
@@ -465,3 +465,24 @@ class Config:
 
 # Expose the instance directly
 config = Config()
+
+# Add the get_sqlite_path function for backward compatibility with tests
+def get_sqlite_path():
+    """Get the path to the SQLite database."""
+    # First check environment variable
+    env_path = os.environ.get("WORDNET_SQLITE_PATH")
+    if env_path and os.path.exists(env_path):
+        return env_path
+
+    # Default path
+    default_path = os.path.expanduser("~/.wn_data/wn.db")
+    return default_path
+
+# Add the load_config function for backward compatibility with tests
+def load_config():
+    """Load configuration from config.yaml."""
+    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f)
+    return {}
