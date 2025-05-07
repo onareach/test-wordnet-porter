@@ -1,3 +1,1 @@
-"""
-Steps for the WordNet Porter application.
-"""
+"""Step modules for WordNet Porter migration process"""
